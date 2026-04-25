@@ -4,10 +4,15 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
-import Courses from "./pages/Courses.tsx";
+import Login from "./pages/Login.tsx";
+import RoleSelect from "./pages/RoleSelect.tsx";
+import StudentDashboard from "./pages/StudentDashboard.tsx";
+import MyCourses from "./pages/MyCourses.tsx";
 import CourseDetail from "./pages/CourseDetail.tsx";
-import Dashboard from "./pages/Dashboard.tsx";
-import Teach from "./pages/Teach.tsx";
+import Profile from "./pages/Profile.tsx";
+import ProfessorDashboard from "./pages/ProfessorDashboard.tsx";
+import ProfessorCourses from "./pages/ProfessorCourses.tsx";
+import Upload from "./pages/Upload.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -20,10 +25,22 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/courses" element={<Courses />} />
-          <Route path="/course/:slug" element={<CourseDetail />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/teach" element={<Teach />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/role" element={<RoleSelect />} />
+
+          {/* Student */}
+          <Route path="/dashboard" element={<StudentDashboard />} />
+          <Route path="/my-courses" element={<MyCourses />} />
+          <Route path="/course/:id" element={<CourseDetail />} />
+
+          {/* Professor */}
+          <Route path="/professor" element={<ProfessorDashboard />} />
+          <Route path="/professor/courses" element={<ProfessorCourses />} />
+          <Route path="/upload" element={<Upload />} />
+
+          {/* Shared */}
+          <Route path="/profile" element={<Profile />} />
+
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
