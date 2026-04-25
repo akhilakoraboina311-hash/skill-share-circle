@@ -1,144 +1,143 @@
-import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { Nav } from "@/components/site/Nav";
-import { Footer } from "@/components/site/Footer";
-import { getCourse } from "@/lib/courses";
+import { useEffect } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { ArrowLeft, Clock, Users, CheckCircle2 } from "lucide-react";
+import { AppNav } from "@/components/app/AppNav";
 import { Button } from "@/components/ui/button";
-import { Star, Clock, Users, PlayCircle, CheckCircle2, ArrowLeft } from "lucide-react";
+import { findCourse, MY_ENROLLED_IDS } from "@/lib/mockData";
+import { getUser } from "@/lib/auth";
 import { toast } from "sonner";
 
-const CourseDetail = () => {
-  const { slug } = useParams();
-  const course = slug ? getCourse(slug) : undefined;
-  const [enrolled, setEnrolled] = useState(false);
+export default function CourseDetail() {
+  const { id = "" } = useParams();
+  const navigate = useNavigate();
+  const user = getUser();
+  const course = findCourse(id);
+
+  const isStudent = user?.role === "student";
+  const navItems = isStudent
+    ? [
+        { to: "/dashboard", label: "Home" },
+        { to: "/my-courses", label: "My Courses" },
+        { to: "/profile", label: "Profile" },
+      ]
+    : [
+        { to: "/professor", label: "Home" },
+        { to: "/upload", label: "Upload Content" },
+        { to: "/professor/courses", label: "My Courses" },
+        { to: "/profile", label: "Profile" },
+      ];
+
+  useEffect(() => {
+    document.title = course ? `${course.title} · Skill Share Circle` : "Course · Skill Share Circle";
+    if (!user) navigate("/login");
+  }, [navigate, user, course]);
 
   if (!course) {
     return (
       <div className="min-h-screen bg-background">
-        <Nav />
-        <div className="container mx-auto px-6 py-32 text-center">
-          <h1 className="font-display text-4xl">Course not found</h1>
-          <Link to="/courses" className="mt-6 inline-block text-primary hover:underline">Back to courses</Link>
-        </div>
+        <AppNav items={navItems} />
+        <main className="container mx-auto px-6 py-20 text-center">
+          <h1 className="text-2xl font-bold">Course not found</h1>
+          <Link to="/dashboard" className="text-primary underline mt-4 inline-block">
+            Back to dashboard
+          </Link>
+        </main>
       </div>
     );
   }
 
-  const handleEnroll = () => {
-    setEnrolled(true);
-    toast.success(`You're in! Welcome to "${course.title}".`);
-  };
+  const enrolled = MY_ENROLLED_IDS.includes(course.id);
 
   return (
     <div className="min-h-screen bg-background">
-      <Nav />
+      <AppNav items={navItems} />
 
-      {/* Hero */}
-      <section className="bg-gradient-paper border-b border-border/60">
-        <div className="container mx-auto px-6 py-12">
-          <Link to="/courses" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors">
-            <ArrowLeft className="h-4 w-4" /> All courses
-          </Link>
-          <div className="mt-8 grid md:grid-cols-12 gap-10">
-            <div className="md:col-span-7">
-              <span className="text-xs uppercase tracking-[0.2em] text-primary">{course.category}</span>
-              <h1 className="font-display text-4xl md:text-6xl mt-3 text-balance leading-[1.05]">{course.title}</h1>
-              <p className="mt-5 text-lg text-muted-foreground max-w-2xl">{course.excerpt}</p>
-              <div className="mt-6 flex flex-wrap items-center gap-5 text-sm">
-                <span className="inline-flex items-center gap-1.5">
-                  <Star className="h-4 w-4 fill-accent text-accent" />
-                  <strong>{course.rating}</strong>
-                  <span className="text-muted-foreground">({course.reviews.toLocaleString()} reviews)</span>
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                  <Users className="h-4 w-4" /> {course.students.toLocaleString()} learners
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                  <Clock className="h-4 w-4" /> {course.hours}h · {course.lessons} lessons
-                </span>
-                <span className="px-2.5 py-1 rounded-full bg-secondary text-xs">{course.level}</span>
-              </div>
-              <div className="mt-8 flex items-center gap-3">
-                <div className="h-11 w-11 rounded-full bg-primary/15 text-primary flex items-center justify-center font-display">
-                  {course.instructor[0]}
-                </div>
-                <div>
-                  <p className="font-medium">{course.instructor}</p>
-                  <p className="text-sm text-muted-foreground">{course.instructorRole}</p>
-                </div>
-              </div>
-            </div>
-            <div className="md:col-span-5">
-              <div className="rounded-2xl overflow-hidden bg-card border border-border shadow-card sticky top-24">
-                <div className="relative aspect-video bg-muted">
-                  <img src={course.cover} alt={course.title} className="h-full w-full object-cover" />
-                  <button className="absolute inset-0 grid place-items-center bg-foreground/20 hover:bg-foreground/30 transition-colors">
-                    <PlayCircle className="h-16 w-16 text-background drop-shadow-lg" />
-                  </button>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-display text-4xl">${course.price}</span>
-                    <span className="text-sm text-muted-foreground">one-time</span>
-                  </div>
-                  <Button
-                    onClick={handleEnroll}
-                    disabled={enrolled}
-                    className="w-full mt-5 h-12 bg-primary text-primary-foreground hover:bg-primary/90 shadow-warm"
-                  >
-                    {enrolled ? "Enrolled — head to dashboard" : "Enroll now"}
-                  </Button>
-                  <ul className="mt-6 space-y-2.5 text-sm">
-                    {["Lifetime access", "Weekly cohort circle", "Peer reviews on your work", "Certificate of completion"].map((b) => (
-                      <li key={b} className="flex items-center gap-2 text-muted-foreground">
-                        <CheckCircle2 className="h-4 w-4 text-primary" /> {b}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+      <main className="container mx-auto px-4 md:px-6 py-8 md:py-10 max-w-5xl">
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors mb-6"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back
+        </button>
+
+        <article className="animate-fade-up">
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className="rounded-full bg-primary-soft text-primary text-xs font-semibold px-3 py-1">
+              {course.category}
+            </span>
+            <span className="rounded-full text-primary-foreground text-xs font-bold uppercase tracking-wide px-3 py-1" style={{ background: "hsl(var(--success))" }}>
+              Free
+            </span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-balance">{course.title}</h1>
+          <p className="text-muted-foreground mt-2">
+            Taught by <span className="font-semibold text-foreground">{course.instructor}</span>
+          </p>
+
+          <div className="mt-4 flex flex-wrap items-center gap-5 text-sm text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <Clock className="h-4 w-4" /> {course.duration}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Users className="h-4 w-4" /> {course.enrolled.toLocaleString()} enrolled
+            </span>
+          </div>
+
+          <div className="mt-8 rounded-2xl overflow-hidden bg-card shadow-card border border-border">
+            <div className="aspect-video bg-muted">
+              <iframe
+                src={course.videoUrl}
+                title={course.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="h-full w-full"
+              />
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* About + curriculum */}
-      <section className="container mx-auto px-6 py-16 grid md:grid-cols-12 gap-12">
-        <div className="md:col-span-7">
-          <h2 className="font-display text-3xl">About this course</h2>
-          <p className="mt-4 text-muted-foreground leading-relaxed text-lg">{course.about}</p>
+          <div className="grid md:grid-cols-3 gap-8 mt-8">
+            <div className="md:col-span-2">
+              <h2 className="text-xl font-bold mb-3">About this course</h2>
+              <p className="text-foreground/80 leading-relaxed">{course.description}</p>
 
-          <h2 className="font-display text-3xl mt-14">Curriculum</h2>
-          <ol className="mt-6 divide-y divide-border border-y border-border">
-            {course.curriculum.map((l, i) => (
-              <li key={i} className="flex items-center gap-4 py-4">
-                <span className="font-display text-xl text-muted-foreground w-8">{String(i + 1).padStart(2, "0")}</span>
-                <span className="flex-1">{l.title}</span>
-                <span className="text-sm text-muted-foreground">{l.minutes} min</span>
-              </li>
-            ))}
-          </ol>
-        </div>
+              <h3 className="text-lg font-bold mt-8 mb-3">What you'll get</h3>
+              <ul className="space-y-2">
+                {[
+                  "Beginner-friendly, step-by-step lessons",
+                  "Real exercises you can practice today",
+                  "Full lifetime access — always free",
+                  "Community support from peers",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-        <aside className="md:col-span-5">
-          <h2 className="font-display text-3xl">From the cohort</h2>
-          <div className="mt-6 space-y-5">
-            {course.testimonials.map((t, i) => (
-              <div key={i} className="rounded-2xl bg-card border border-border p-6 shadow-soft">
-                <div className="flex items-center gap-1 text-accent">
-                  {[...Array(t.rating)].map((_, k) => <Star key={k} className="h-3.5 w-3.5 fill-current" />)}
-                </div>
-                <p className="mt-3 font-display italic text-lg leading-snug">"{t.text}"</p>
-                <p className="mt-3 text-sm text-muted-foreground">— {t.name}, {t.role}</p>
+            <aside className="md:sticky md:top-24 self-start">
+              <div className="bg-card border border-border rounded-2xl shadow-card p-6">
+                <p className="text-3xl font-bold text-primary">Free</p>
+                <p className="text-xs text-muted-foreground mt-1">No payment required</p>
+                <Button
+                  className="w-full h-11 mt-5 font-semibold shadow-glow hover:shadow-hover transition-shadow"
+                  onClick={() =>
+                    enrolled
+                      ? toast.info("You're already enrolled")
+                      : toast.success(`Enrolled in ${course.title}!`)
+                  }
+                >
+                  {enrolled ? "✓ Enrolled" : "Enroll (Free)"}
+                </Button>
+                <p className="text-xs text-muted-foreground mt-3 text-center">
+                  Frontend demo — no real enrollment
+                </p>
               </div>
-            ))}
+            </aside>
           </div>
-        </aside>
-      </section>
-
-      <Footer />
+        </article>
+      </main>
     </div>
   );
-};
-
-export default CourseDetail;
+}
