@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload as UploadIcon } from "lucide-react";
+import { Upload as UploadIcon, FileText, BookOpen } from "lucide-react";
 import { AppNav } from "@/components/app/AppNav";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,24 +34,32 @@ export default function Upload() {
   const [category, setCategory] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [thumbnail, setThumbnail] = useState("");
+  const [reference, setReference] = useState("");
+  const [notesPdf, setNotesPdf] = useState("");
 
   useEffect(() => {
     document.title = "Upload Course · Skill Share Circle";
     if (!user || user.role !== "professor") navigate("/login");
   }, [navigate, user]);
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !description || !category || !videoUrl || !thumbnail) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-    toast.success("Course uploaded! (frontend demo)");
+  const resetForm = () => {
     setTitle("");
     setDescription("");
     setCategory("");
     setVideoUrl("");
     setThumbnail("");
+    setReference("");
+    setNotesPdf("");
+  };
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !description || !category || !videoUrl || !thumbnail) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    toast.success("Course uploaded! (frontend demo)");
+    resetForm();
   };
 
   return (
@@ -132,18 +140,46 @@ export default function Upload() {
             />
           </div>
 
+          <div className="pt-2">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Optional resources
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <Label htmlFor="reference" className="flex items-center gap-1.5">
+                  <BookOpen className="h-4 w-4 text-primary" />
+                  Reference link
+                </Label>
+                <Input
+                  id="reference"
+                  placeholder="https://example.com/reading-material"
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Article, book, or website students can read alongside.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="notes" className="flex items-center gap-1.5">
+                  <FileText className="h-4 w-4 text-primary" />
+                  Notebook / Notes PDF URL
+                </Label>
+                <Input
+                  id="notes"
+                  placeholder="https://example.com/notes.pdf"
+                  value={notesPdf}
+                  onChange={(e) => setNotesPdf(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Link to a PDF with notes or workbook for this course.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="pt-2 flex flex-col sm:flex-row gap-3 sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setTitle("");
-                setDescription("");
-                setCategory("");
-                setVideoUrl("");
-                setThumbnail("");
-              }}
-            >
+            <Button type="button" variant="outline" onClick={resetForm}>
               Reset
             </Button>
             <Button type="submit" className="font-semibold shadow-glow hover:shadow-hover transition-shadow">
