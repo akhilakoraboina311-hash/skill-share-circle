@@ -1,8 +1,9 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, TrendingUp, Globe2 } from "lucide-react";
+import { Eye, TrendingUp, Globe2, Search } from "lucide-react";
 import { AppNav } from "@/components/app/AppNav";
 import { CourseCard } from "@/components/app/CourseCard";
+import { Input } from "@/components/ui/input";
 import {
   ALL_COURSES,
   PROFESSOR_COURSES,
@@ -21,6 +22,7 @@ const professorNav = [
 export default function ProfessorDashboard() {
   const navigate = useNavigate();
   const user = getUser();
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     document.title = "Professor · Skill Share Circle";
@@ -45,6 +47,14 @@ export default function ProfessorDashboard() {
   }, []);
   const avgEngagement = Math.round(totals.engagement / Math.max(myCourses.length, 1));
 
+  const q = query.trim().toLowerCase();
+  const matches = (text: string) => text.toLowerCase().includes(q);
+  const filteredCourses = q
+    ? myCourses.filter(
+        (c) => matches(c.title) || matches(c.category) || matches(c.description)
+      )
+    : myCourses;
+
   return (
     <div className="min-h-screen bg-background">
       <AppNav items={professorNav} />
@@ -56,6 +66,17 @@ export default function ProfessorDashboard() {
           <p className="text-muted-foreground mt-2 max-w-2xl">
             Track how your courses are performing and share new knowledge.
           </p>
+
+          <div className="relative mt-6 max-w-xl">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search your courses by title, category…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="pl-10 h-11 rounded-xl bg-card shadow-card"
+            />
+          </div>
         </header>
 
         {/* Analytics summary */}
@@ -99,13 +120,19 @@ export default function ProfessorDashboard() {
         <section>
           <div className="flex items-end justify-between mb-4">
             <h2 className="text-xl font-bold">My Courses</h2>
-            <span className="text-sm text-muted-foreground">{myCourses.length} published</span>
+            <span className="text-sm text-muted-foreground">
+              {q ? `${filteredCourses.length} of ${myCourses.length}` : `${myCourses.length} published`}
+            </span>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {myCourses.map((c) => (
-              <CourseCard key={c.id} course={c} ctaLabel="Manage" />
-            ))}
-          </div>
+          {filteredCourses.length === 0 ? (
+            <p className="text-muted-foreground">No courses match "{query}".</p>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredCourses.map((c) => (
+                <CourseCard key={c.id} course={c} ctaLabel="Manage" />
+              ))}
+            </div>
+          )}
         </section>
       </main>
     </div>

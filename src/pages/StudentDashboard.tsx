@@ -1,9 +1,10 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Flame, CalendarDays, Clock } from "lucide-react";
+import { Flame, CalendarDays, Clock, Search } from "lucide-react";
 import { AppNav } from "@/components/app/AppNav";
 import { CourseCard } from "@/components/app/CourseCard";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
 import { ALL_COURSES, MY_ENROLLED_IDS, ACTIVITY, findCourse } from "@/lib/mockData";
 import { getUser } from "@/lib/auth";
 
@@ -16,6 +17,7 @@ const studentNav = [
 export default function StudentDashboard() {
   const navigate = useNavigate();
   const user = getUser();
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     document.title = "Dashboard · Skill Share Circle";
@@ -28,6 +30,19 @@ export default function StudentDashboard() {
     []
   );
   const maxDaily = Math.max(...ACTIVITY.daily.map((d) => d.hours));
+
+  const q = query.trim().toLowerCase();
+  const matches = (text: string) => text.toLowerCase().includes(q);
+  const filteredEnrolled = q
+    ? enrolled.filter(
+        (c) => matches(c.title) || matches(c.instructor) || matches(c.category)
+      )
+    : enrolled;
+  const filteredAvailable = q
+    ? ALL_COURSES.filter(
+        (c) => matches(c.title) || matches(c.instructor) || matches(c.category)
+      )
+    : ALL_COURSES;
 
   return (
     <div className="min-h-screen bg-background">
@@ -43,6 +58,17 @@ export default function StudentDashboard() {
           <p className="text-muted-foreground mt-2 max-w-2xl">
             Pick up where you left off, or explore something new today.
           </p>
+
+          <div className="relative mt-6 max-w-xl">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search courses, instructors, or categories…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="pl-10 h-11 rounded-xl bg-card shadow-card"
+            />
+          </div>
         </section>
 
         {/* Activity */}
@@ -97,13 +123,15 @@ export default function StudentDashboard() {
         <section>
           <div className="flex items-end justify-between mb-4">
             <h2 className="text-xl font-bold">My Courses</h2>
-            <span className="text-sm text-muted-foreground">{enrolled.length} enrolled</span>
+            <span className="text-sm text-muted-foreground">{filteredEnrolled.length} of {enrolled.length}</span>
           </div>
-          {enrolled.length === 0 ? (
-            <p className="text-muted-foreground">You haven't enrolled in anything yet.</p>
+          {filteredEnrolled.length === 0 ? (
+            <p className="text-muted-foreground">
+              {q ? "No enrolled courses match your search." : "You haven't enrolled in anything yet."}
+            </p>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {enrolled.map((c) => (
+              {filteredEnrolled.map((c) => (
                 <CourseCard key={c.id} course={c} ctaLabel="Continue" />
               ))}
             </div>
@@ -114,13 +142,19 @@ export default function StudentDashboard() {
         <section>
           <div className="flex items-end justify-between mb-4">
             <h2 className="text-xl font-bold">Available Courses</h2>
-            <span className="text-sm text-muted-foreground">All free, forever</span>
+            <span className="text-sm text-muted-foreground">
+              {q ? `${filteredAvailable.length} match` : "All free, forever"}
+            </span>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {ALL_COURSES.map((c) => (
-              <CourseCard key={c.id} course={c} />
-            ))}
-          </div>
+          {filteredAvailable.length === 0 ? (
+            <p className="text-muted-foreground">No courses match "{query}".</p>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredAvailable.map((c) => (
+                <CourseCard key={c.id} course={c} />
+              ))}
+            </div>
+          )}
         </section>
       </main>
     </div>
